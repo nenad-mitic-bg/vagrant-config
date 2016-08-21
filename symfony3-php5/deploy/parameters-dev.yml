@@ -11,9 +11,9 @@ parameters:
     mailer_user: null
     mailer_password: null
 
-    secret: ae5fe6e4495eff1e111217dd39c51a6428cd20c4
+    secret: zomgsecret
 
-    stripe_public_key: pk_test_8zpMlln3wV4Ias0CZ0zXZqkE
-    stripe_secret_key: sk_test_Q4zQJOws5Ee1MSRtC7ioNovX
+    stripe_public_key: ~
+    stripe_secret_key: ~
 
     vich.upload_dir.box_image: /uploads/images/box

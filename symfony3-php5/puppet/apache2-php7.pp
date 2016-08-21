@@ -1,16 +1,19 @@
 
+exec {'group-add-adm':
+    command => '/usr/bin/sudo /usr/sbin/usermod -a -G adm vagrant'
+}
+
 exec {'php7-repo':
-    command => '/usr/bin/sudo /usr/bin/add-apt-repository -y ppa:ondrej/php'
+    command => '/usr/bin/sudo /usr/bin/add-apt-repository -y ppa:ondrej/php && /usr/bin/sudo /usr/bin/apt-get update'
 }
 
 exec {'apt-update':
-    command => '/usr/bin/sudo /usr/bin/apt-get update',
-    require => Exec['php7-repo']
+    command => '/usr/bin/sudo /usr/bin/apt-get update'
 }
 
-package {['php7.0', 'php7.0-apcu', 'php7.0-cli', 'php7.0-common', 'php7.0-curl', 'php7.0-gd', 'php7.0-imagick', 'php7.0-intl', 'php7.0-json', 'php7.0-mbstring', 'php7.0-mcrypt', 'php7.0-mysql', 'php7.0-sqlite', 'php7.0-xdebug', 'php7.0-xml']:
+package {['php7.0', 'php7.0-apcu', 'php7.0-cli', 'php7.0-common', 'php7.0-curl', 'php7.0-gd', 'php7.0-imagick', 'php7.0-intl', 'php7.0-json', 'php7.0-mbstring', 'php7.0-mcrypt', 'php7.0-mysql', 'php7.0-sqlite', 'php7.0-xdebug', 'php7.0-xml', 'php7.0-zip']:
     ensure => latest,
-    require => Exec['apt-update']
+    require => Exec['php7-repo']
 }
 
 package {'apache2':
@@ -26,6 +29,10 @@ package {'libapache2-mod-php7.0':
 package {'mysql-server':
     ensure => latest,
     require => Exec['apt-update']
+}
+
+package {'git':
+    ensure => latest
 }
 
 service {'apache2':
@@ -55,7 +62,7 @@ file {'php7-apache':
 file {'php7-cli':
     path => '/etc/php/7.0/cli/php.ini',
     target => '/vagrant/puppet/assets/php7-cli.ini',
-    require => Package['php7.0']
+    require => Package['php7.0-cli']
 }
 
 exec {'apache-mod-rewrite':
@@ -107,8 +114,38 @@ file {'apache-phpmyadmin':
     require => Package['apache2']
 }
 
+file {'symfony-config':
+    source => '/vagrant/deploy/parameters-dev.yml',
+    path => '/vagrant/app/config/parameters.yml',
+    ensure => present
+}
+
+exec {'swap-setup':
+    command => '/usr/bin/sudo /bin/sh /vagrant/puppet/assets/swap.sh'
+}
+
+exec {'composer-setup':
+    command => '/usr/bin/sudo /bin/sh /vagrant/puppet/assets/composer-setup.sh',
+    require => Package['php7.0', 'php7.0-apcu', 'php7.0-cli', 'php7.0-common', 'php7.0-curl', 'php7.0-gd', 'php7.0-imagick', 'php7.0-intl', 'php7.0-json', 'php7.0-mbstring', 'php7.0-mcrypt', 'php7.0-mysql', 'php7.0-sqlite', 'php7.0-xdebug', 'php7.0-xml', 'php7.0-zip']
+}
+
+exec {'composer-install-deps':
+    group => vagrant,
+    user => vagrant,
+    environment => ["HOME=/home/vagrant"],
+    cwd => '/vagrant',
+    command => '/usr/local/bin/composer install',
+    timeout => 0,
+    require => [Exec['composer-setup'], File['symfony-config'], Package['git'], Package['php7.0-zip'], Exec['swap-setup']]
+}
+
 exec {'zentabox-deploy':
   command => '/bin/sh deploy/deploy-dev.sh',
   cwd => '/vagrant',
-  require => [Package['php7.0'], Exec['create-db']]
+  require => [Package['php7.0-cli'], Exec['create-db'], Exec['composer-install-deps']]
+}
+
+exec {'zentabox-starting-data':
+    command => '/usr/bin/mysql -u root symfony < /vagrant/puppet/assets/starting-data.sql',
+    require => [Package['mysql-server'], Service['mysql'], Exec['zentabox-deploy']]
 }
