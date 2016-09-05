@@ -139,13 +139,8 @@ exec {'composer-install-deps':
     require => [Exec['composer-setup'], File['symfony-config'], Package['git'], Package['php7.0-zip'], Exec['swap-setup']]
 }
 
-exec {'zentabox-deploy':
+exec {'symfony-deploy':
   command => '/bin/sh deploy/deploy-dev.sh',
   cwd => '/vagrant',
   require => [Package['php7.0-cli'], Exec['create-db'], Exec['composer-install-deps']]
-}
-
-exec {'zentabox-starting-data':
-    command => '/usr/bin/mysql -u root symfony < /vagrant/puppet/assets/starting-data.sql',
-    require => [Package['mysql-server'], Service['mysql'], Exec['zentabox-deploy']]
 }
