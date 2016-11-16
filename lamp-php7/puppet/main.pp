@@ -1,4 +1,20 @@
 
+package {'dos2unix':
+    ensure => latest
+}
+
+file {'assets':
+    path => '/home/vagrant/assets',
+    ensure => directory,
+    recurse => true,
+    source => '/vagrant/puppet/assets'
+}
+
+exec {'prepare-assets':
+    command => '/usr/bin/dos2unix /vagrant/puppet/assets/*',
+    require => [File['assets'], Package['dos2unix']]
+}
+
 exec {'group-add-adm':
     command => '/usr/bin/sudo /usr/sbin/usermod -a -G adm vagrant'
 }
@@ -47,22 +63,22 @@ service {'mysql':
 
 file {'apache-envvars':
     path => '/etc/apache2/envvars',
-    target => '/vagrant/puppet/assets/apache2-envvars',
+    source => '/home/vagrant/assets/apache2-envvars',
     notify => Service['apache2'],
-    require => Package['apache2']
+    require => [Package['apache2'], Exec['prepare-assets']]
 }
 
 file {'php7-apache':
     path => '/etc/php/7.0/apache2/php.ini',
-    target => '/vagrant/puppet/assets/php7-apache.ini',
+    source => '/home/vagrant/assets/php7-apache.ini',
     notify => Service['apache2'],
-    require => Package['php7.0']
+    require => [Package['php7.0'], Exec['prepare-assets']]
 }
 
 file {'php7-cli':
     path => '/etc/php/7.0/cli/php.ini',
-    target => '/vagrant/puppet/assets/php7-cli.ini',
-    require => Package['php7.0-cli']
+    source => '/home/vagrant/assets/php7-cli.ini',
+    require => [Package['php7.0-cli'], Exec['prepare-assets']]
 }
 
 exec {'apache-mod-rewrite':
@@ -72,8 +88,8 @@ exec {'apache-mod-rewrite':
 }
 
 exec {'create-db':
-    command => '/usr/bin/mysql -u root < /vagrant/puppet/assets/database.sql',
-    require => [Package['mysql-server'], Service['mysql']]
+    command => '/usr/bin/mysql -u root < /home/vagrant/assets/database.sql',
+    require => [Package['mysql-server'], Service['mysql'], Exec['prepare-assets']]
 }
 
 exec {'apache-disable-default-site':
@@ -84,9 +100,9 @@ exec {'apache-disable-default-site':
 
 file {'apache-dev-site':
     path => '/etc/apache2/sites-enabled/dev.conf',
-    target => '/vagrant/puppet/assets/apache-dev.conf',
+    source => '/home/vagrant/assets/apache-dev.conf',
     notify => Service['apache2'],
-    require => Package['apache2']
+    require => [Package['apache2'], Exec['prepare-assets']]
 }
 
 exec {'phpmyadmin-fetch':
@@ -102,18 +118,18 @@ exec {'phpmyadmin-extract':
 
 file {'phpmyadmin-conf':
     path => '/home/vagrant/phpMyAdmin-4.6.3-all-languages/config.inc.php',
-    source => '/vagrant/puppet/assets/phpmyadmin-config.inc.php',
-    require => Exec['phpmyadmin-extract']
+    source => '/home/vagrant/assets/phpmyadmin-config.inc.php',
+    require => [Exec['phpmyadmin-extract'], Exec['prepare-assets']]
 }
 
 file {'apache-phpmyadmin':
     path => '/etc/apache2/conf-enabled/phpmyadmin.conf',
-    ensure => link,
-    target => '/vagrant/puppet/assets/apache-phpmyadmin.conf',
+    source => '/home/vagrant/assets/apache-phpmyadmin.conf',
     notify => Service['apache2'],
-    require => Package['apache2']
+    require => [Package['apache2'], Exec['prepare-assets']]
 }
 
 exec {'swap-setup':
-    command => '/usr/bin/sudo /bin/sh /vagrant/puppet/assets/swap.sh'
+    command => '/usr/bin/sudo /bin/sh /home/vagrant/assets/swap.sh',
+    require => Exec['prepare-assets']
 }
