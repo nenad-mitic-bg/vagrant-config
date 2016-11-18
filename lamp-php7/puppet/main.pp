@@ -11,7 +11,7 @@ file {'assets':
 }
 
 exec {'prepare-assets':
-    command => '/usr/bin/dos2unix /vagrant/puppet/assets/*',
+    command => '/usr/bin/dos2unix /home/vagrant/assets/*',
     require => [File['assets'], Package['dos2unix']]
 }
 
