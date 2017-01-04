@@ -34,22 +34,21 @@ service {'mysql':
 
 file {'apache-envvars':
     path => '/etc/apache2/envvars',
-    target => '/vagrant/puppet/assets/apache2-envvars',
+    source => '/vagrant/puppet/assets/apache2-envvars',
     notify => Service['apache2'],
     require => Package['apache2']
 }
 
 file {'phpconf-apache':
     path => '/etc/php/7.0/apache2/php.ini',
-    target => '/vagrant/puppet/assets/php-apache.ini',
-    ensure => file,
+    source => '/vagrant/puppet/assets/php7-apache.ini',
     notify => Service['apache2'],
     require => Package['php7.0', 'apache2', 'libapache2-mod-php7.0']
 }
 
 file {'phpconf-cli':
     path => '/etc/php/7.0/cli/php.ini',
-    target => '/vagrant/puppet/assets/php-cli.ini',
+    source => '/vagrant/puppet/assets/php7-cli.ini',
     require => Package['php7.0-cli']
 }
 
@@ -96,8 +95,7 @@ file {'phpmyadmin-conf':
 
 file {'apache-phpmyadmin':
     path => '/etc/apache2/conf-enabled/phpmyadmin.conf',
-    ensure => link,
-    target => '/vagrant/puppet/assets/apache-phpmyadmin.conf',
+    source => '/vagrant/puppet/assets/apache-phpmyadmin.conf',
     notify => Service['apache2'],
     require => Package['apache2']
 }
