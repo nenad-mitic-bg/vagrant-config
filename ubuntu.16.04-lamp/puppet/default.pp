@@ -13,9 +13,18 @@ package {'libapache2-mod-php7.0':
     require => Package['apache2', 'php7.0']
 }
 
+exec {'mysql-prepare':
+    command => '/bin/echo "mysql-server mysql-server/root_password password root"|/usr/bin/sudo /usr/bin/debconf-set-selections && /bin/echo "mysql-server mysql-server/root_password_again password root"|/usr/bin/sudo /usr/bin/debconf-set-selections'
+}
+
 package {'mysql-server':
     ensure => latest,
-    require => Exec['apt-update']
+    require => Exec['apt-update', 'mysql-prepare']
+}
+
+exec {'mysql-complete':
+    command => '/usr/bin/mysqladmin -u root -p"root" password ""',
+    require => Service['mysql']
 }
 
 package {'git':
@@ -60,7 +69,7 @@ exec {'apache-mod-rewrite':
 
 exec {'create-db':
     command => '/usr/bin/mysql -u root < /vagrant/puppet/assets/database.sql',
-    require => [Package['mysql-server'], Service['mysql']]
+    require => Exec['mysql-complete']
 }
 
 exec {'apache-disable-default-site':
