@@ -25,7 +25,7 @@ service {'mysql':
 file {'phpconf-fpm':
     path => '/etc/php/7.0/fpm/php.ini',
     source => '/vagrant/puppet/assets/php7-fpm.ini',
-    notify => Service['nginx'],
+    notify => Service['php7.0-fpm'],
     require => Package['php7.0', 'php-fpm']
 }
 
@@ -46,18 +46,17 @@ exec {'create-db':
     require => [Package['mysql-server'], Service['mysql']]
 }
 
-#exec {'apache-disable-default-site':
-#    command => '/usr/sbin/a2dissite 000-default',
-#    notify => Service['apache2'],
-#    require => Package['apache2']
-#}
+file {'/etc/nginx/sites-enabled/default':
+    ensure => 'absent',
+    require => Package['nginx']
+}
 
-#file {'apache-dev-site':
-#    path => '/etc/apache2/sites-enabled/dev.conf',
-#    source => '/vagrant/puppet/assets/apache-dev.conf',
-#    notify => Service['apache2'],
-#    require => Package['apache2']
-#}
+file {'apache-dev-site':
+    path => '/etc/nginx/sites-enabled/dev',
+    source => '/vagrant/puppet/assets/nginx-dev.conf',
+    notify => Service['nginx'],
+    require => [Package['nginx', 'php-fpm'], File['/etc/nginx/sites-enabled/default']]
+}
 
 #exec {'phpmyadmin-fetch':
 #    command => '/usr/bin/wget -q https://files.phpmyadmin.net/phpMyAdmin/4.6.5.2/phpMyAdmin-4.6.5.2-all-languages.tar.gz',
