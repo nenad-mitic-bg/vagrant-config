@@ -58,22 +58,22 @@ file {'apache-dev-site':
     require => [Package['nginx', 'php-fpm'], File['/etc/nginx/sites-enabled/default']]
 }
 
-#exec {'phpmyadmin-fetch':
-#    command => '/usr/bin/wget -q https://files.phpmyadmin.net/phpMyAdmin/4.6.5.2/phpMyAdmin-4.6.5.2-all-languages.tar.gz',
-#    creates => '/home/vagrant/phpMyAdmin-4.6.5.2-all-languages.tar.gz'
-#}
+exec {'phpmyadmin-fetch':
+    command => '/usr/bin/wget -q https://files.phpmyadmin.net/phpMyAdmin/4.6.5.2/phpMyAdmin-4.6.5.2-all-languages.tar.gz',
+    creates => '/home/vagrant/phpMyAdmin-4.6.5.2-all-languages.tar.gz'
+}
 
-#exec {'phpmyadmin-extract':
-#    command => '/bin/tar -zxvf phpMyAdmin-4.6.5.2-all-languages.tar.gz && /bin/mv phpMyAdmin-4.6.5.2-all-languages phpmyadmin',
-#    creates => '/home/vagrant/phpmyadmin',
-#    require => Exec['phpmyadmin-fetch']
-#}
+exec {'phpmyadmin-extract':
+    command => '/bin/tar -zxvf phpMyAdmin-4.6.5.2-all-languages.tar.gz && /bin/mv phpMyAdmin-4.6.5.2-all-languages phpmyadmin',
+    creates => '/home/vagrant/phpmyadmin',
+    require => Exec['phpmyadmin-fetch']
+}
 
-#file {'phpmyadmin-conf':
-#    path => '/home/ubuntu/phpmyadmin/config.inc.php',
-#    source => '/vagrant/puppet/assets/phpmyadmin-config.inc.php',
-#    require => Exec['phpmyadmin-extract']
-#}
+file {'phpmyadmin-conf':
+    path => '/home/ubuntu/phpmyadmin/config.inc.php',
+    source => '/vagrant/puppet/assets/phpmyadmin-config.inc.php',
+    require => Exec['phpmyadmin-extract']
+}
 
 #file {'apache-phpmyadmin':
 #    path => '/etc/apache2/conf-enabled/phpmyadmin.conf',
