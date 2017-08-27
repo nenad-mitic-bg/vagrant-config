@@ -22,12 +22,12 @@ service {'mysql':
   require => Package['mysql-server']
 }
 
-#file {'phpconf-apache':
-#    path => '/etc/php/7.0/apache2/php.ini',
-#    source => '/vagrant/puppet/assets/php7-apache.ini',
-#    notify => Service['apache2'],
-#    require => Package['php7.0', 'apache2', 'libapache2-mod-php7.0']
-#}
+file {'phpconf-fpm':
+    path => '/etc/php/7.0/fpm/php.ini',
+    source => '/vagrant/puppet/assets/php7-fpm.ini',
+    notify => Service['nginx'],
+    require => Package['php7.0', 'php-fpm']
+}
 
 file {'phpconf-cli':
     path => '/etc/php/7.0/cli/php.ini',
