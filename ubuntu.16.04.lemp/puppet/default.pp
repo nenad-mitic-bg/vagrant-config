@@ -8,6 +8,17 @@ package {['nginx', 'php7.0', 'php7.0-mysql', 'php7.0-gd', 'php7.0-bz2', 'php7.0-
     require => Exec['apt-update']
 }
 
+service{'nginx':
+    ensure => running,
+    require => Package['nginx']
+}
+
+service{'php-fpm':
+    name => 'php7.0-fpm',
+    ensure => running,
+    require => Package['php-fpm']
+}
+
 package {'mysql-server':
     ensure => latest,
     require => Exec['apt-update']
@@ -25,7 +36,7 @@ service {'mysql':
 file {'phpconf-fpm':
     path => '/etc/php/7.0/fpm/php.ini',
     source => '/vagrant/puppet/assets/php7-fpm.ini',
-    notify => Service['php7.0-fpm'],
+    notify => Service['php-fpm'],
     require => Package['php7.0', 'php-fpm']
 }
 
@@ -35,11 +46,11 @@ file {'phpconf-cli':
     require => Package['php7.0-cli']
 }
 
-#exec {'apache-mod-rewrite':
-#    command => '/usr/sbin/a2enmod rewrite',
-#    notify => Service['apache2'],
-#    require => Package['apache2']
-#}
+##exec {'apache-mod-rewrite':
+##    command => '/usr/sbin/a2enmod rewrite',
+##    notify => Service['apache2'],
+##    require => Package['apache2']
+##}
 
 exec {'create-db':
     command => '/usr/bin/mysql -u root < /vagrant/puppet/assets/database.sql',
@@ -51,36 +62,36 @@ file {'/etc/nginx/sites-enabled/default':
     require => Package['nginx']
 }
 
-file {'apache-dev-site':
+file {'nginx-dev-site':
     path => '/etc/nginx/sites-enabled/dev',
     source => '/vagrant/puppet/assets/nginx-dev.conf',
     notify => Service['nginx'],
     require => [Package['nginx', 'php-fpm'], File['/etc/nginx/sites-enabled/default']]
 }
 
-exec {'phpmyadmin-fetch':
-    command => '/usr/bin/wget -q https://files.phpmyadmin.net/phpMyAdmin/4.6.5.2/phpMyAdmin-4.6.5.2-all-languages.tar.gz',
-    creates => '/home/vagrant/phpMyAdmin-4.6.5.2-all-languages.tar.gz'
-}
-
-exec {'phpmyadmin-extract':
-    command => '/bin/tar -zxvf phpMyAdmin-4.6.5.2-all-languages.tar.gz && /bin/mv phpMyAdmin-4.6.5.2-all-languages phpmyadmin',
-    creates => '/home/vagrant/phpmyadmin',
-    require => Exec['phpmyadmin-fetch']
-}
-
-file {'phpmyadmin-conf':
-    path => '/home/ubuntu/phpmyadmin/config.inc.php',
-    source => '/vagrant/puppet/assets/phpmyadmin-config.inc.php',
-    require => Exec['phpmyadmin-extract']
-}
-
-#file {'apache-phpmyadmin':
-#    path => '/etc/apache2/conf-enabled/phpmyadmin.conf',
-#    source => '/vagrant/puppet/assets/apache-phpmyadmin.conf',
-#    notify => Service['apache2'],
-#    require => Package['apache2']
-#}
+##exec {'phpmyadmin-fetch':
+##    command => '/usr/bin/wget -q https://files.phpmyadmin.net/phpMyAdmin/4.6.5.2/phpMyAdmin-4.6.5.2-all-languages.tar.gz',
+##    creates => '/home/vagrant/phpMyAdmin-4.6.5.2-all-languages.tar.gz'
+##}
+#
+##exec {'phpmyadmin-extract':
+##    command => '/bin/tar -zxvf phpMyAdmin-4.6.5.2-all-languages.tar.gz && /bin/mv phpMyAdmin-4.6.5.2-all-languages phpmyadmin',
+##    creates => '/home/vagrant/phpmyadmin',
+##    require => Exec['phpmyadmin-fetch']
+##}
+#
+##file {'phpmyadmin-conf':
+##    path => '/home/ubuntu/phpmyadmin/config.inc.php',
+##    source => '/vagrant/puppet/assets/phpmyadmin-config.inc.php',
+##    require => Exec['phpmyadmin-extract']
+##}
+#
+##file {'apache-phpmyadmin':
+##    path => '/etc/apache2/conf-enabled/phpmyadmin.conf',
+##    source => '/vagrant/puppet/assets/apache-phpmyadmin.conf',
+##    notify => Service['apache2'],
+##    require => Package['apache2']
+##}
 
 exec {'swap-setup':
     command => '/usr/bin/sudo /bin/sh /vagrant/puppet/assets/swap.sh'
